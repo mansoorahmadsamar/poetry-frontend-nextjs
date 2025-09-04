@@ -1,6 +1,8 @@
 "use client";
 
 import { useAuth } from "@/stores/auth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,16 +30,21 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  const { user } = useAuth();
+  const { user, userProfile, onboardingStep } = useAuth();
+  const router = useRouter();
 
   if (!user) return null;
+
+  // Redirect to onboarding if not completed
+  useEffect(() => {
+    if (userProfile && !userProfile.onboardingCompleted && onboardingStep < 5) {
+      router.push('/onboarding');
+    }
+  }, [userProfile, onboardingStep, router]);
 
   const userName = getUserDisplayName(user);
   const profilePicture = getUserProfilePicture(user);
   const userInitials = getUserInitials(user);
-
-  // Debug: Log user data to see what we're receiving
-  console.log('User data in dashboard:', user);
 
   return (
     <div className="container py-8 px-4">
@@ -232,7 +239,7 @@ function DashboardContent() {
                 </div>
               </div>
               <Button variant="outline" size="sm" className="w-full" asChild>
-                <Link href="/profile/edit">Edit Profile</Link>
+                <Link href="/dashboard/profile">Edit Profile</Link>
               </Button>
             </CardContent>
           </Card>

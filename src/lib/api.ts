@@ -1,4 +1,16 @@
 import { ApiResponse, ApiError, AuthTokens } from "@/types";
+import {
+  ExtendedUser,
+  UserInterest,
+  EngagementActivity,
+  UpdateProfileRequest,
+  AddInterestRequest,
+  TrackEngagementRequest,
+  ProfileResponse,
+  InterestsResponse,
+  EngagementResponse,
+  InterestType
+} from "@/types/profile";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -272,6 +284,88 @@ class ApiClient {
     if (type) params.set("type", type);
     
     const response = await this.request<ApiResponse<any>>(`/api/search?${params.toString()}`);
+    return response.data;
+  }
+
+  // Profile Management endpoints
+  async getProfile(): Promise<ExtendedUser> {
+    const response = await this.request<ProfileResponse>("/api/profile");
+    return response.data;
+  }
+
+  async updateUserProfile(data: UpdateProfileRequest): Promise<ExtendedUser> {
+    const response = await this.request<ProfileResponse>("/api/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return response.data;
+  }
+
+  async completeOnboarding(): Promise<ExtendedUser> {
+    const response = await this.request<ProfileResponse>("/api/profile/complete-onboarding", {
+      method: "POST",
+    });
+    return response.data;
+  }
+
+  // Interest Management endpoints
+  async getInterests(): Promise<UserInterest[]> {
+    const response = await this.request<InterestsResponse>("/api/profile/interests");
+    return response.data;
+  }
+
+  async getInterestsByType(interestType: InterestType): Promise<UserInterest[]> {
+    const response = await this.request<InterestsResponse>(`/api/profile/interests/${interestType}`);
+    return response.data;
+  }
+
+  async addInterest(interest: AddInterestRequest): Promise<UserInterest> {
+    const response = await this.request<ApiResponse<UserInterest>>("/api/profile/interests", {
+      method: "POST",
+      body: JSON.stringify(interest),
+    });
+    return response.data;
+  }
+
+  async removeInterest(interestType: InterestType, interestId: number): Promise<void> {
+    await this.request(`/api/profile/interests/${interestType}/${interestId}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Engagement Tracking endpoints
+  async trackEngagement(engagement: TrackEngagementRequest): Promise<EngagementActivity> {
+    const response = await this.request<ApiResponse<EngagementActivity>>("/api/profile/engagement/track", {
+      method: "POST",
+      body: JSON.stringify(engagement),
+    });
+    return response.data;
+  }
+
+  async getRecentEngagement(days: number = 30): Promise<EngagementActivity[]> {
+    const response = await this.request<EngagementResponse>(`/api/profile/engagement/recent?days=${days}`);
+    return response.data;
+  }
+
+  async getTopEngagedContent(targetType: string, days: number = 30): Promise<EngagementActivity[]> {
+    const response = await this.request<EngagementResponse>(`/api/profile/engagement/top/${targetType}?days=${days}`);
+    return response.data;
+  }
+
+  // Poets endpoint
+  async getPoets(): Promise<any> {
+    const response = await this.request<ApiResponse<any>>("/api/poets");
+    return response.data;
+  }
+
+  async getPoet(id: string): Promise<any> {
+    const response = await this.request<ApiResponse<any>>(`/api/poets/${id}`);
+    return response.data;
+  }
+
+  // Tags endpoint
+  async getTags(): Promise<any> {
+    const response = await this.request<ApiResponse<any>>("/api/tags");
     return response.data;
   }
 }

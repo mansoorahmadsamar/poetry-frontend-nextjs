@@ -196,14 +196,14 @@ export interface UsePoemsReturn {
 
 // Constants
 export const POEM_CATEGORIES = [
-  { id: 'love', name: 'Love & Romance', color: '#ef4444' },
-  { id: 'nature', name: 'Nature', color: '#22c55e' },
-  { id: 'life', name: 'Life & Philosophy', color: '#3b82f6' },
-  { id: 'grief', name: 'Grief & Loss', color: '#6b7280' },
-  { id: 'celebration', name: 'Celebration', color: '#f59e0b' },
-  { id: 'spiritual', name: 'Spiritual', color: '#8b5cf6' },
-  { id: 'social', name: 'Social Commentary', color: '#ef4444' },
-  { id: 'experimental', name: 'Experimental', color: '#ec4899' },
+  { id: 'love', name: 'Love & Romance', color: '#ef4444', description: 'Poems about love and relationships' },
+  { id: 'nature', name: 'Nature', color: '#22c55e', description: 'Poems about the natural world' },
+  { id: 'life', name: 'Life & Philosophy', color: '#3b82f6', description: 'Poems about life experiences and philosophy' },
+  { id: 'grief', name: 'Grief & Loss', color: '#6b7280', description: 'Poems about loss and mourning' },
+  { id: 'celebration', name: 'Celebration', color: '#f59e0b', description: 'Poems about joy and celebration' },
+  { id: 'spiritual', name: 'Spiritual', color: '#8b5cf6', description: 'Poems about spirituality and faith' },
+  { id: 'social', name: 'Social Commentary', color: '#ef4444', description: 'Poems about social issues' },
+  { id: 'experimental', name: 'Experimental', color: '#ec4899', description: 'Experimental and avant-garde poetry' },
 ] as const;
 
 export type PoemCategoryId = typeof POEM_CATEGORIES[number]['id'];

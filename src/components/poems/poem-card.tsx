@@ -10,6 +10,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Poem } from "@/types";
 import { formatRelativeTime, createExcerpt, getCategoryColor } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useEngagementTracking, useViewTracking } from "@/hooks/useEngagementTracking";
+import { apiClient } from "@/lib/api";
 
 interface PoemCardProps {
   poem: Poem;
@@ -27,6 +29,17 @@ export function PoemCard({
   const [isLiked, setIsLiked] = useState(poem.isLikedByUser || false);
   const [isBookmarked, setIsBookmarked] = useState(poem.isBookmarkedByUser || false);
   const [likesCount, setLikesCount] = useState(poem.likesCount || 0);
+  
+  // Engagement tracking
+  const { trackLike, trackUnlike, trackBookmark, trackUnbookmark, trackShare } = useEngagementTracking();
+  const viewRef = useViewTracking('POEM', parseInt(poem.id), {
+    metadata: { 
+      title: poem.title, 
+      category: poem.category.name,
+      author: poem.author.name,
+      variant 
+    },
+  });
 
   const handleLike = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,19 +50,25 @@ export function PoemCard({
     setIsLiked(!isLiked);
     setLikesCount(prev => wasLiked ? prev - 1 : prev + 1);
 
-    // TODO: Implement actual API call
-    // try {
-    //   if (wasLiked) {
-    //     await apiClient.unlikePoem(poem.id);
-    //   } else {
-    //     await apiClient.likePoem(poem.id);
-    //   }
-    // } catch (error) {
-    //   // Revert optimistic update on error
-    //   setIsLiked(wasLiked);
-    //   setLikesCount(prev => wasLiked ? prev + 1 : prev - 1);
-    //   console.error("Failed to toggle like:", error);
-    // }
+    // Track engagement
+    if (wasLiked) {
+      await trackUnlike('POEM', parseInt(poem.id), { title: poem.title });
+    } else {
+      await trackLike('POEM', parseInt(poem.id), { title: poem.title });
+    }
+
+    try {
+      if (wasLiked) {
+        await apiClient.unlikePoem(poem.id);
+      } else {
+        await apiClient.likePoem(poem.id);
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsLiked(wasLiked);
+      setLikesCount(prev => wasLiked ? prev + 1 : prev - 1);
+      console.error("Failed to toggle like:", error);
+    }
   };
 
   const handleBookmark = async (e: React.MouseEvent) => {
@@ -59,22 +78,34 @@ export function PoemCard({
     const wasBookmarked = isBookmarked;
     setIsBookmarked(!isBookmarked);
 
-    // TODO: Implement actual API call
-    // try {
-    //   if (wasBookmarked) {
-    //     await apiClient.unbookmarkPoem(poem.id);
-    //   } else {
-    //     await apiClient.bookmarkPoem(poem.id);
-    //   }
-    // } catch (error) {
-    //   setIsBookmarked(wasBookmarked);
-    //   console.error("Failed to toggle bookmark:", error);
-    // }
+    // Track engagement
+    if (wasBookmarked) {
+      await trackUnbookmark('POEM', parseInt(poem.id), { title: poem.title });
+    } else {
+      await trackBookmark('POEM', parseInt(poem.id), { title: poem.title });
+    }
+
+    try {
+      if (wasBookmarked) {
+        await apiClient.unbookmarkPoem(poem.id);
+      } else {
+        await apiClient.bookmarkPoem(poem.id);
+      }
+    } catch (error) {
+      setIsBookmarked(wasBookmarked);
+      console.error("Failed to toggle bookmark:", error);
+    }
   };
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Track engagement
+    await trackShare('POEM', parseInt(poem.id), { 
+      title: poem.title,
+      method: navigator.share ? 'native' : 'clipboard' 
+    });
     
     if (navigator.share) {
       try {
@@ -99,7 +130,7 @@ export function PoemCard({
 
   if (variant === "compact") {
     return (
-      <Card className={cn("hover:shadow-md transition-shadow duration-200", className)}>
+      <Card ref={viewRef} className={cn("hover:shadow-md transition-shadow duration-200", className)}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -159,7 +190,7 @@ export function PoemCard({
 
   if (variant === "featured") {
     return (
-      <Card className={cn("hover:shadow-lg transition-all duration-300 border-2 border-primary/20", className)}>
+      <Card ref={viewRef} className={cn("hover:shadow-lg transition-all duration-300 border-2 border-primary/20", className)}>
         <CardHeader>
           <div className="flex items-center space-x-3 mb-3">
             <Avatar className="h-8 w-8">
@@ -242,7 +273,7 @@ export function PoemCard({
 
   // Default variant
   return (
-    <Card className={cn("hover:shadow-md transition-shadow duration-200", className)}>
+    <Card ref={viewRef} className={cn("hover:shadow-md transition-shadow duration-200", className)}>
       <CardHeader>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-3">
