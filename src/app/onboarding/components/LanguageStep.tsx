@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useEffect } from "react";
 import { useAuth } from "@/stores/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,13 +40,22 @@ export function LanguageStep({ data, updateData, onNext }: LanguageStepProps) {
   const form = useForm<LanguageStepFormData>({
     resolver: zodResolver(languageStepSchema),
     defaultValues: {
-      preferredLanguage: data.preferences.preferredLanguage || "en",
-      readingLevel: data.preferences.readingLevel || "BEGINNER",
-      profileVisibility: data.preferences.profileVisibility || "PUBLIC",
+      preferredLanguage: "en",
+      readingLevel: "BEGINNER",
+      profileVisibility: "PUBLIC",
     },
   });
 
-  const onSubmit = async (formData: LanguageStepFormData) => {
+  // Update form values when data changes
+  useEffect(() => {
+    form.reset({
+      preferredLanguage: data.preferences.preferredLanguage || "en",
+      readingLevel: data.preferences.readingLevel || "BEGINNER",
+      profileVisibility: data.preferences.profileVisibility || "PUBLIC",
+    });
+  }, [data.preferences, form]);
+
+  const handleFormChange = async (formData: LanguageStepFormData) => {
     // Update local onboarding data
     updateData("preferences", formData);
 
@@ -59,9 +69,20 @@ export function LanguageStep({ data, updateData, onNext }: LanguageStepProps) {
     } catch (error) {
       console.error("Failed to update preferences:", error);
     }
-
-    onNext();
   };
+
+  // Auto-save when form values change with debounce
+  useEffect(() => {
+    const subscription = form.watch((values) => {
+      const timer = setTimeout(() => {
+        handleFormChange(values as LanguageStepFormData);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    });
+    
+    return () => subscription.unsubscribe();
+  }, [form, handleFormChange]);
 
   return (
     <div className="space-y-6">
@@ -73,7 +94,7 @@ export function LanguageStep({ data, updateData, onNext }: LanguageStepProps) {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <div className="space-y-8">
           {/* Language Preference */}
           <Card>
             <CardHeader>
@@ -224,12 +245,7 @@ export function LanguageStep({ data, updateData, onNext }: LanguageStepProps) {
             </CardContent>
           </Card>
 
-          <div className="flex justify-end pt-4">
-            <Button type="submit" size="lg">
-              Continue
-            </Button>
-          </div>
-        </form>
+        </div>
       </Form>
     </div>
   );

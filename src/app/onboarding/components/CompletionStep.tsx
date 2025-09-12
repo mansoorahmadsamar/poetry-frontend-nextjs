@@ -163,10 +163,10 @@ export function CompletionStep({ data, onComplete, isCompleting }: CompletionSte
           className="min-w-[200px]"
         >
           {isCompleting ? (
-            "Setting up your account..."
+            "Saving your profile..."
           ) : (
             <>
-              Enter PoetryVerse
+              Save & Complete Profile
               <ArrowRight className="ml-2 h-4 w-4" />
             </>
           )}

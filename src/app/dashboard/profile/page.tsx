@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuth } from "@/stores/auth";
+import { useAuthRouting } from "@/hooks/use-auth-routing";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { ProfileForm } from "./components/ProfileForm";
 import { ProfileSettings } from "./components/ProfileSettings";
@@ -22,13 +23,14 @@ export default function ProfilePage() {
 }
 
 function ProfileContent() {
-  const { user, userProfile, profileLoading, interests } = useAuth();
+  const { user, userProfile, interests } = useAuth();
+  const { isLoading, shouldShowContent } = useAuthRouting();
 
-  if (profileLoading && !userProfile) {
+  if (isLoading) {
     return <ProfileSkeleton />;
   }
 
-  if (!user) return null;
+  if (!user || !shouldShowContent) return null;
 
   const displayName = getUserDisplayName(user);
   const profilePicture = getUserProfilePicture(user);

@@ -1,8 +1,7 @@
 "use client";
 
 import { useAuth } from "@/stores/auth";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useAuthRouting } from "@/hooks/use-auth-routing";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,17 +29,10 @@ export default function DashboardPage() {
 }
 
 function DashboardContent() {
-  const { user, userProfile, onboardingStep } = useAuth();
-  const router = useRouter();
+  const { user } = useAuth();
+  const { isLoading, shouldShowContent } = useAuthRouting();
 
-  if (!user) return null;
-
-  // Redirect to onboarding if not completed
-  useEffect(() => {
-    if (userProfile && !userProfile.onboardingCompleted && onboardingStep < 5) {
-      router.push('/onboarding');
-    }
-  }, [userProfile, onboardingStep, router]);
+  if (!user || isLoading) return null;
 
   const userName = getUserDisplayName(user);
   const profilePicture = getUserProfilePicture(user);

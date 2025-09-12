@@ -37,6 +37,14 @@ export function CategoryStep({ data, updateData, onNext }: CategoryStepProps) {
     loadCategories();
   }, []);
 
+  // Auto-save selected categories whenever selection changes
+  useEffect(() => {
+    updateData("interests", { 
+      ...data.interests, 
+      categories: selectedCategories 
+    });
+  }, [selectedCategories]);
+
   const loadCategories = async () => {
     setLoading(true);
     try {
@@ -170,14 +178,10 @@ export function CategoryStep({ data, updateData, onNext }: CategoryStepProps) {
         </div>
       )}
 
-      <div className="flex justify-end pt-4">
-        <Button 
-          onClick={handleContinue}
-          disabled={selectedCategories.length === 0 || isSubmitting}
-          size="lg"
-        >
-          {isSubmitting ? "Saving..." : "Continue"}
-        </Button>
+      <div className="text-center pt-4">
+        <div className="text-sm text-muted-foreground">
+          Select categories you're interested in - you can add more later
+        </div>
       </div>
     </div>
   );

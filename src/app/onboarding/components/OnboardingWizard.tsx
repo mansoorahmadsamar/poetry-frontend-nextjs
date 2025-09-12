@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/stores/auth";
+import { apiClient } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,8 +50,8 @@ const STEPS = [
 ];
 
 export function OnboardingWizard() {
-  const { onboardingStep, setOnboardingStep, completeOnboarding } = useAuth();
-  const [currentStep, setCurrentStep] = useState(Math.max(1, onboardingStep));
+  const { user, userProfile, completeOnboarding, addInterest } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
   const [onboardingData, setOnboardingData] = useState<OnboardingData>({
     basicInfo: {
       fullName: "",
@@ -74,11 +75,64 @@ export function OnboardingWizard() {
     },
   });
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const router = useRouter();
 
+  // Monitor currentStep changes
   useEffect(() => {
-    setOnboardingStep(currentStep);
-  }, [currentStep, setOnboardingStep]);
+    console.log("currentStep changed to:", currentStep);
+  }, [currentStep]);
+
+  // Load existing user data when component mounts - only run once
+  useEffect(() => {
+    const loadExistingData = async () => {
+      try {
+        // Fetch both user and profile data directly
+        const [currentUser, currentProfile] = await Promise.allSettled([
+          apiClient.getMe(),
+          apiClient.getProfile()
+        ]);
+        
+        const userData = currentUser.status === 'fulfilled' ? currentUser.value : user;
+        const profileData = currentProfile.status === 'fulfilled' ? currentProfile.value : userProfile;
+        
+        // Pre-fill onboarding data with existing user/profile data
+        if (userData || profileData) {
+          setOnboardingData({
+            basicInfo: {
+              fullName: profileData?.fullName || userData?.fullName || userData?.name || "",
+              username: profileData?.username || "",
+              bio: profileData?.bio || userData?.bio || "",
+              dateOfBirth: profileData?.dateOfBirth || "",
+              gender: profileData?.gender || undefined,
+              location: profileData?.location || "",
+              country: profileData?.country || "",
+            },
+            preferences: {
+              preferredLanguage: profileData?.preferredLanguage || "en",
+              readingLevel: profileData?.readingLevel || "BEGINNER",
+              profileVisibility: profileData?.profileVisibility || "PUBLIC",
+            },
+            interests: {
+              categories: [],
+              poets: [],
+              languages: [],
+              contentTypes: [],
+            },
+          });
+        }
+        
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error("Failed to load existing data:", error);
+        setIsDataLoaded(true); // Still mark as loaded to continue
+      }
+    };
+
+    // Only run once on mount
+    loadExistingData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const updateOnboardingData = (section: keyof OnboardingData, data: any) => {
     setOnboardingData(prev => ({
@@ -88,9 +142,9 @@ export function OnboardingWizard() {
   };
 
   const nextStep = () => {
-    if (currentStep < STEPS.length) {
-      setCurrentStep(prev => prev + 1);
-    }
+    console.log("nextStep called, currentStep:", currentStep);
+    setCurrentStep(currentStep + 1);
+    console.log("setCurrentStep called with:", currentStep + 1);
   };
 
   const prevStep = () => {
@@ -115,6 +169,21 @@ export function OnboardingWizard() {
   const currentStepConfig = STEPS[currentStep - 1];
   const CurrentStepComponent = currentStepConfig.component;
   const progress = (currentStep / STEPS.length) * 100;
+
+  console.log("Rendering step:", currentStep, "Config:", currentStepConfig?.title, "Component:", CurrentStepComponent?.name);
+
+  // Show loading while data is being loaded
+  if (!isDataLoaded) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <h3 className="text-lg font-medium">Loading your information...</h3>
+          <p className="text-muted-foreground">We're preparing your personalized onboarding experience.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -188,13 +257,12 @@ export function OnboardingWizard() {
         </CardContent>
       </Card>
 
-      {/* Navigation */}
-      {currentStep < STEPS.length && (
+      {/* Navigation - Skip for step 1 as it has its own Next button */}
+      {currentStep > 1 && currentStep < STEPS.length && (
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"
             onClick={prevStep}
-            disabled={currentStep === 1}
           >
             <ChevronLeft className="mr-2 h-4 w-4" />
             Previous

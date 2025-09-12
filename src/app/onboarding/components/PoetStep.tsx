@@ -85,6 +85,14 @@ export function PoetStep({ data, updateData, onNext }: PoetStepProps) {
     loadPoets();
   }, []);
 
+  // Auto-save selected poets whenever selection changes
+  useEffect(() => {
+    updateData("interests", { 
+      ...data.interests, 
+      poets: selectedPoets 
+    });
+  }, [selectedPoets]);
+
   const loadPoets = async () => {
     setLoading(true);
     try {
@@ -114,9 +122,9 @@ export function PoetStep({ data, updateData, onNext }: PoetStepProps) {
     });
   };
 
-  const filteredPoets = poets.filter(poet =>
+  const filteredPoets = Array.isArray(poets) ? poets.filter(poet =>
     poet.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  ) : [];
 
   const handleContinue = async () => {
     setIsSubmitting(true);
@@ -130,7 +138,7 @@ export function PoetStep({ data, updateData, onNext }: PoetStepProps) {
     // Add interests to backend
     try {
       for (const poetId of selectedPoets) {
-        const poet = poets.find(p => p.id === poetId);
+        const poet = Array.isArray(poets) ? poets.find(p => p.id === poetId) : null;
         if (poet) {
           await addInterest({
             interestType: "POET",
@@ -240,17 +248,10 @@ export function PoetStep({ data, updateData, onNext }: PoetStepProps) {
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-4">
+      <div className="text-center pt-4">
         <div className="text-sm text-muted-foreground">
           You can always add more poets later in your profile
         </div>
-        <Button 
-          onClick={handleContinue}
-          disabled={isSubmitting}
-          size="lg"
-        >
-          {isSubmitting ? "Saving..." : selectedPoets.length > 0 ? "Continue" : "Skip for now"}
-        </Button>
       </div>
     </div>
   );

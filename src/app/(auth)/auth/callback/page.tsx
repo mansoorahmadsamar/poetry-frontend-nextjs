@@ -6,6 +6,8 @@ import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { authManager } from "@/lib/auth";
+import { apiClient } from "@/lib/api";
+import { RoutingManager } from "@/lib/routing";
 import { useAuth } from "@/stores/auth";
 import { AuthTokens } from "@/types";
 
@@ -52,9 +54,15 @@ export default function AuthCallbackPage() {
         setUser(user);
         setStatus("success");
 
+        // Get user profile to check onboarding status
+        const profile = await apiClient.getProfile();
+        
+        // Determine redirect destination based on routing logic
+        const redirectDestination = RoutingManager.getPostAuthRedirect(profile, redirectTo || undefined);
+
         // Redirect after a short delay
         setTimeout(() => {
-          router.push(redirectTo || "/dashboard");
+          router.push(redirectDestination);
         }, 2000);
 
       } catch (error) {

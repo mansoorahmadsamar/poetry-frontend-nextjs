@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/stores/auth";
+import { useAuthRouting } from "@/hooks/use-auth-routing";
 import { ProtectedRoute } from "@/components/auth/protected-route";
 import { OnboardingWizard } from "./components/OnboardingWizard";
 
@@ -15,15 +14,9 @@ export default function OnboardingPage() {
 }
 
 function OnboardingContent() {
-  const { userProfile, onboardingStep } = useAuth();
-  const router = useRouter();
+  const { isLoading, shouldShowContent } = useAuthRouting();
 
-  useEffect(() => {
-    // Redirect if onboarding is already completed
-    if (userProfile?.onboardingCompleted || onboardingStep >= 5) {
-      router.push("/dashboard");
-    }
-  }, [userProfile, onboardingStep, router]);
+  if (isLoading) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-muted/20">

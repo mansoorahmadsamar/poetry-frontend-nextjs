@@ -116,13 +116,9 @@ export class AuthManager {
   }
 
   async logout(): Promise<void> {
-    try {
-      await apiClient.logout();
-    } catch (error) {
-      console.error("Logout API call failed:", error);
-    } finally {
-      this.clearTokens();
-    }
+    // Clear tokens locally - sufficient for OAuth-based logout
+    // Backend logout endpoint causes CORS issues due to OAuth redirect
+    this.clearTokens();
   }
 
   async initializeAuth(): Promise<User | null> {
