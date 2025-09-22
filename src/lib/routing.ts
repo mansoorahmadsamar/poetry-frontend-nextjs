@@ -16,29 +16,13 @@ export class RoutingManager {
       return { shouldRedirect: false };
     }
 
-    // If onboarding is not completed
-    if (!userProfile.onboardingCompleted) {
-      // Only redirect to onboarding if they're not already there
-      if (!currentPath.startsWith('/onboarding')) {
-        return { 
-          shouldRedirect: true, 
-          redirectPath: '/onboarding',
-          reason: 'Onboarding incomplete'
-        };
-      }
-      return { shouldRedirect: false };
-    }
-
-    // If onboarding is completed
-    if (userProfile.onboardingCompleted) {
-      // If they're on onboarding page, redirect to intended destination or dashboard
-      if (currentPath.startsWith('/onboarding')) {
-        return {
-          shouldRedirect: true,
-          redirectPath: intendedDestination || '/dashboard',
-          reason: 'Onboarding already completed'
-        };
-      }
+    // Skip onboarding completely - redirect away from onboarding to dashboard
+    if (currentPath.startsWith('/onboarding')) {
+      return {
+        shouldRedirect: true,
+        redirectPath: intendedDestination || '/dashboard',
+        reason: 'Onboarding skipped - redirecting to dashboard'
+      };
     }
 
     return { shouldRedirect: false };
@@ -48,14 +32,7 @@ export class RoutingManager {
    * Determines the redirect path after successful authentication
    */
   static getPostAuthRedirect(userProfile: ExtendedUser | null, intendedDestination?: string): string {
-    if (!userProfile) {
-      return '/dashboard'; // Default fallback
-    }
-
-    if (!userProfile.onboardingCompleted) {
-      return '/onboarding';
-    }
-
+    // Always redirect to dashboard (feed) - skip onboarding completely
     return intendedDestination || '/dashboard';
   }
 

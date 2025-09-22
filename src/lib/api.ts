@@ -273,8 +273,9 @@ class ApiClient {
   }
 
   // Categories endpoint
-  async getCategories(): Promise<any> {
-    const response = await this.request<ApiResponse<any>>("/api/categories");
+  async getCategories(params?: Record<string, any>): Promise<any> {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    const response = await this.request<ApiResponse<any>>(`/api/categories${queryString}`);
     return response.data;
   }
 
@@ -353,8 +354,9 @@ class ApiClient {
   }
 
   // Poets endpoint
-  async getPoets(): Promise<any> {
-    const response = await this.request<ApiResponse<any>>("/api/poets");
+  async getPoets(params?: Record<string, any>): Promise<any> {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    const response = await this.request<ApiResponse<any>>(`/api/poets${queryString}`);
     return response.data;
   }
 

@@ -54,11 +54,28 @@ export default function AuthCallbackPage() {
         setUser(user);
         setStatus("success");
 
-        // Get user profile to check onboarding status
-        const profile = await apiClient.getProfile();
-        
-        // Determine redirect destination based on routing logic
-        const redirectDestination = RoutingManager.getPostAuthRedirect(profile, redirectTo || undefined);
+        // Auto-save auth provider information to profile and complete onboarding
+        try {
+          // Update profile with auth provider information
+          const updateData = {
+            fullName: user.fullName || user.name,
+            username: user.email.split('@')[0], // Use email prefix as default username
+            preferredLanguage: 'en',
+            readingLevel: 'BEGINNER' as const,
+            profileVisibility: 'PUBLIC' as const
+          };
+
+          await apiClient.updateUserProfile(updateData);
+
+          // Complete onboarding automatically (in case it's not completed)
+          await apiClient.completeOnboarding();
+        } catch (error) {
+          // Silently continue if profile update fails - user can update later
+          console.log("Profile update skipped:", error);
+        }
+
+        // Always redirect to dashboard (feed)
+        const redirectDestination = redirectTo || '/dashboard';
 
         // Redirect after a short delay
         setTimeout(() => {
